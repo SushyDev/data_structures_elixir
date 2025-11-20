@@ -15,9 +15,9 @@ defmodule RadixTrie do
   end
 
   def lookup(tree, query) do
-    transformedQuery = String.codepoints(query)
-    childNode = find_child(tree, transformedQuery)
-    lookup(tree, transformedQuery, childNode)
+    transformed_query = String.codepoints(query)
+    child_node = find_child(tree, transformed_query)
+    lookup(tree, transformed_query, child_node)
   end
 
   def insert(tree, query, value \\ :is_leaf) do
@@ -30,7 +30,7 @@ defmodule RadixTrie do
 
   # Leave this to be optimized later bc this is terrible
   defp find_common_prefix(node, query) do
-    queryLastMatch = query
+    query_last_match = query
       |> Enum.with_index()
       |> Enum.count(fn {letter, index} ->
         otherLetter = Enum.at(node.prefix, index) || nil
@@ -39,11 +39,11 @@ defmodule RadixTrie do
 
     common = query
       |> Enum.with_index()
-      |> Enum.filter(fn { _letter, index } -> index < queryLastMatch end)
+      |> Enum.filter(fn { _letter, index } -> index < query_last_match end)
       |> Enum.map(fn { letter, _index } -> letter end)
 
-    { _, query_suffix } = Enum.split(query, queryLastMatch)
-    { _, node_suffix } = Enum.split(node.prefix, queryLastMatch)
+    { _, query_suffix } = Enum.split(query, query_last_match)
+    { _, node_suffix } = Enum.split(node.prefix, query_last_match)
 
     { common, query_suffix, node_suffix }
   end
@@ -56,10 +56,10 @@ defmodule RadixTrie do
           query == node.prefix -> node
           true ->
             { _, query_suffix, _ } = find_common_prefix(node, query)
-            foundChild = find_child(node, query_suffix)
-            case foundChild do
+            found_child = find_child(node, query_suffix)
+            case found_child do
               nil -> nil
-              %Node{} -> lookup(tree, query_suffix, foundChild)
+              %Node{} -> lookup(tree, query_suffix, found_child)
             end
         end
     end

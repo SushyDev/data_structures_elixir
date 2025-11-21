@@ -29,7 +29,7 @@ defmodule RadixTrie do
   end
 
   # Leave this to be optimized later bc this is terrible
-  defp find_common_prefix(node, query) do
+  defp parse_query(node, query) do
     query_last_match = query
       |> Enum.with_index()
       |> Enum.count(fn {letter, index} ->
@@ -55,7 +55,7 @@ defmodule RadixTrie do
         cond do
           query == node.prefix -> node
           true ->
-            { _, query_suffix, _ } = find_common_prefix(node, query)
+            { _, query_suffix, _ } = parse_query(node, query)
             found_child = find_child(node, query_suffix)
             case found_child do
               nil -> nil
@@ -66,7 +66,7 @@ defmodule RadixTrie do
   end
 
   defp insert(tree, query, value, node) do
-    { common_prefix, query_suffix, node_suffix } = find_common_prefix(node, query)
+    { common_prefix, query_suffix, node_suffix } = parse_query(node, query)
 
     node_suffix_length = length(node_suffix)
     query_suffix_length = length(query_suffix)
@@ -79,8 +79,7 @@ defmodule RadixTrie do
       # Node.prefix is a prefix of query
       # Example: Node="te", Query="team". Common="te", Remainder="am".
       node_suffix_length == 0 && query_suffix_length > 0 ->
-        IO.puts("node prefix: " <> List.to_string(node.prefix) <> " is prefix of query: " <> List.to_string(query))
-        IO.puts("Finding child: " <> List.to_string(query_suffix) <> " inside " <> List.to_string(node.prefix))
+        IO.puts("Node prefix: " <> List.to_string(node.prefix) <> " is prefix of query: " <> List.to_string(query))
         # Create new child if not exists, else insert inside existing child recursively
         updated_children = Map.update(
           node.children,
@@ -96,7 +95,7 @@ defmodule RadixTrie do
       # Query is a prefix of node.prefix
       # Example: Node="team", Query="te". Common="te", NodeSuffix="am".
       node_suffix_length > 0 && query_suffix_length == 0 ->
-        IO.puts("query: " <> List.to_string(query) <> " is prefix of node prefix: " <> List.to_string(node.prefix))
+        IO.puts("Query: " <> List.to_string(query) <> " is prefix of node prefix: " <> List.to_string(node.prefix))
         # Create new parent with prefix
         %RadixTrie.Node{ prefix: common_prefix, value: node.value, children: %{
           # Truncated current node
@@ -109,7 +108,7 @@ defmodule RadixTrie do
           # Truncated current node
           List.first(node_suffix) => %{ node | prefix: node_suffix },
           # New split node
-          List.first(query_suffix) => %RadixTrie.Node{ prefix: query_suffix },
+          List.first(query_suffix) => %RadixTrie.Node{ prefix: query_suffix, value: value },
         } }
     end
   end

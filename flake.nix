@@ -17,7 +17,7 @@
 						buildInputs = [
 							pkgs.elixir
 							pkgs.watchman
-							pkgs.inotify-tools
+							# pkgs.inotify-tools
 						];
 
 						shellHook = ''

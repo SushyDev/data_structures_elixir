@@ -68,17 +68,14 @@ defmodule RadixTrie do
   defp insert(tree, query, value, node) do
     { common_prefix, query_suffix, node_suffix } = parse_query(node, query)
 
-    node_suffix_length = length(node_suffix)
-    query_suffix_length = length(query_suffix)
-
-    cond do
+    case {node_suffix, query_suffix} do
       # The Node's prefix equals the SearchKey.
-      node_suffix_length == 0 && query_suffix_length == 0 -> 
+      {[], []} ->
         %{ node | value: value }
 
       # Node.prefix is a prefix of query
       # Example: Node="te", Query="team". Common="te", Remainder="am".
-      node_suffix_length == 0 && query_suffix_length > 0 ->
+      {[], [_|_]} ->
         IO.puts("Node prefix: " <> List.to_string(node.prefix) <> " is prefix of query: " <> List.to_string(query))
         # Create new child if not exists, else insert inside existing child recursively
         updated_children = Map.update(
@@ -94,15 +91,15 @@ defmodule RadixTrie do
 
       # Query is a prefix of node.prefix
       # Example: Node="team", Query="te". Common="te", NodeSuffix="am".
-      node_suffix_length > 0 && query_suffix_length == 0 ->
+      {[_|_], []} ->
         IO.puts("Query: " <> List.to_string(query) <> " is prefix of node prefix: " <> List.to_string(node.prefix))
         # Create new parent with prefix
         %RadixTrie.Node{ prefix: common_prefix, value: node.value, children: %{
           # Truncated current node
           List.first(node_suffix) => %{ node | prefix: node_suffix }
         } }
-      # Example: Node="test", Key="team". Common="te". NodeSuffix="st", KeySuffix="am".
-      node_suffix_length > 0 && query_suffix_length > 0 ->
+
+      {[_|_], [_|_]} ->
         IO.puts("Mismatch")
         %RadixTrie.Node{ prefix: common_prefix, value: nil, children: %{
           # Truncated current node
@@ -114,13 +111,14 @@ defmodule RadixTrie do
   end
 end
 
+# Usage:
 tree = RadixTrie.new()
 IO.inspect(tree)
 tree = RadixTrie.insert(tree, "team")
 tree = RadixTrie.insert(tree, "test")
 tree = RadixTrie.insert(tree, "testing", "a value")
 tree = RadixTrie.insert(tree, "te")
-tree = RadixTrie.insert(tree, "bruhbruh")
-tree = RadixTrie.insert(tree, "bruh")
+tree = RadixTrie.insert(tree, "fast")
+tree = RadixTrie.insert(tree, "fastcar")
 IO.inspect(tree)
 RadixTrie.get(tree, "testing") |> IO.inspect
